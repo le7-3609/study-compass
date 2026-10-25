@@ -1,0 +1,47 @@
+{
+  "name": "Study Compass - two sessions around one exam week",
+  "today": "2026-10-30",
+  "sessions": [
+    {
+      "note": "Session 1: preferences, tasks, first plan",
+      "turns": [
+        "היי! אני בשנה ב' של מדעי המחשב. כמה דברים שכדאי שתזכור לפעמים הבאות: אצלי אין לימודים אחרי 22:00, לא מתחילים לפני 08:00, ובשבת אין לימודים בכלל.",
+        "תוסיף בבקשה שלוש מטלות: קריאה לסמינר המחקר עד 2026-11-02 (שעתיים), תרגיל 3 באלגוריתמים עד 2026-11-03 (6 שעות), ופרויקט בסטטיסטיקה עד 2026-11-05 (4 שעות).",
+        "תבנה לי תוכנית לימודים לשבוע שמתחיל ביום ראשון 2026-11-01 לפי מערכת השעות שלי."
+      ]
+    },
+    {
+      "note": "Session 2: a NEW agent instance; everything it knows comes from disk",
+      "turns": [
+        "חזרתי. תזכיר לי מה ההעדפות ששמרת לגבי שעות הלימוד שלי, ומה הכי דחוף השבוע?",
+        "אני לא מבין מה זה תכנות דינמי (dynamic programming). תביא הסבר קצר מהאינטרנט, ותוסיף משימה של שעתיים לחזור על הנושא עד 2026-11-03, כהכנה לתרגיל באלגוריתמים.",
+        "שינוי: מעכשיו אפשר ללמוד אצלי עד 23:00 בלילה. תעדכן את זה ותבנה מחדש את התוכנית לאותו שבוע.",
+        "סיימתי את הקריאה לסמינר, תסמן אותה כגמורה."
+      ]
+    }
+  ],
+  "checks": [
+    {"id": "memory_day_end_updated", "type": "pref_equals", "key": "day_end", "value": "23:00",
+     "desc": "contradicting request: the newer limit (23:00) replaced the saved one"},
+    {"id": "memory_old_value_kept", "type": "pref_history_contains", "key": "day_end", "value": "22:00",
+     "desc": "the replaced value 22:00 is kept in the preference history, not silently lost"},
+    {"id": "memory_days_off_saved", "type": "pref_equals", "key": "days_off", "value": "sat",
+     "desc": "Saturday-off preference from session 1 was saved to memory"},
+    {"id": "tasks_saved", "type": "task_count", "min": 4,
+     "desc": "3 tasks from session 1 + 1 from session 2 are on disk"},
+    {"id": "dp_task_added", "type": "task_exists", "title_contains": ["dynamic", "Dynamic", "דינמי"],
+     "due_on_or_before": "2026-11-03", "desc": "review task for dynamic programming was added with the right deadline"},
+    {"id": "seminar_done", "type": "task_status", "title_contains": ["סמינר", "seminar", "Seminar"], "status": "done",
+     "desc": "seminar reading marked done"},
+    {"id": "plan_uses_current_prefs", "type": "plan_respects_prefs",
+     "desc": "saved plan was rebuilt with 08:00-23:00 and has no block outside it or on Saturday"},
+    {"id": "plan_no_clash", "type": "plan_no_calendar_overlap",
+     "desc": "no study block overlaps an event in the timetable file"},
+    {"id": "plan_dp_before_due", "type": "plan_schedules_task_before_due", "title_contains": ["dynamic", "Dynamic", "דינמי"],
+     "desc": "the new DP task is scheduled before its deadline"},
+    {"id": "web_tool_used", "type": "tool_called", "session": 2, "tool": "lookup_topic",
+     "desc": "the external internet tool was used in session 2"},
+    {"id": "recall_in_session2", "type": "answer_contains_any", "session": 2, "turn": 1, "any": ["22:00", "22"],
+     "desc": "the fresh session-2 agent recalls the 22:00 limit from memory (text check)"}
+  ]
+}
