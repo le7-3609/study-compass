@@ -1,0 +1,372 @@
+{
+ "harness": "SDK",
+ "settings": {
+  "model": "gemini-3.5-flash-lite",
+  "effort": "medium",
+  "thinking": "level medium",
+  "max_remote_calls": 10,
+  "max_tokens": 8000
+ },
+ "versions": {
+  "python": "3.11.9",
+  "google-genai": "2.33.0"
+ },
+ "turns": [
+  {
+   "answer": "היי! שמרתי את ההעדפות שלך: יום הלימודים מתחיל ב-08:00 ומסתיים עד 22:00, ובשבתות אין לימודים (days_off: sat). בהצלחה בלימודים בשנה ב'!",
+   "tools": [
+    "remember"
+   ],
+   "tokens": {
+    "input": 2640,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 245
+   },
+   "model_calls": 2,
+   "cost_usd": 0.001404,
+   "seconds": 2.11,
+   "session": 1,
+   "turn": 1,
+   "prompt": "היי! אני בשנה ב' של מדעי המחשב. כמה דברים שכדאי שתזכור לפעמים הבאות: אצלי אין לימודים אחרי 22:00, לא מתחילים לפני 08:00, ובשבת אין לימודים בכלל."
+  },
+  {
+   "answer": "הוספתי את שלוש המטלות לרשימה:\n1. קריאה לסמינר המחקר (T1) - עד 02.11 (2 שעות)\n2. תרגיל 3 באלגוריתמים (T2) - עד 03.11 (6 שעות)\n3. פרויקט בסטטיסטיקה (T3) - עד 05.11 (4 שעות)",
+   "tools": [
+    "add_task",
+    "add_task",
+    "add_task"
+   ],
+   "tokens": {
+    "input": 3629,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 435
+   },
+   "model_calls": 2,
+   "cost_usd": 0.002176,
+   "seconds": 2.26,
+   "session": 1,
+   "turn": 2,
+   "prompt": "תוסיף בבקשה שלוש מטלות: קריאה לסמינר המחקר עד 2026-11-02 (שעתיים), תרגיל 3 באלגוריתמים עד 2026-11-03 (6 שעות), ופרויקט בסטטיסטיקה עד 2026-11-05 (4 שעות)."
+  },
+  {
+   "answer": "הנה תוכנית הלימודים לשבוע שמתחיל ב-01.11.2026:\n\n- **יום ראשון (01.11):** קריאה לסמינר המחקר (T1), תרגיל באלגוריתמים (T2), פרויקט בסטטיסטיקה (T3).\n- **יום שני (02.11):** המשך תרגיל באלגוריתמים (T2) ופרויקט בסטטיסטיקה (T3).\n\nכל המטלות שובצו במלואן, אין מטלות לא משصובצות (unscheduled).",
+   "tools": [
+    "plan_week"
+   ],
+   "tokens": {
+    "input": 4781,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 810
+   },
+   "model_calls": 2,
+   "cost_usd": 0.003459,
+   "seconds": 3.05,
+   "session": 1,
+   "turn": 3,
+   "prompt": "תבנה לי תוכנית לימודים לשבוע שמתחיל ביום ראשון 2026-11-01 לפי מערכת השעות שלי."
+  },
+  {
+   "answer": "ההעדפות השמורות שלך:\n- שעות למידה: 08:00 עד 22:00\n- ימים חופשיים: שבת\n- אורך סשן: 90 דקות\n\nהמשימות הדחופות ביותר השבוע:\n1. **קריאה לסמינר המחקר** (T1) – מוגשת ב-02/11 (2 שעות).\n2. **תרגיל 3 באלגוריתמים** (T2) – מוגשת ב-03/11 (6 שעות).\n3. **פרויקט בסטטיסטיקה** (T3) – מוגשת ב-05/11 (4 שעות).",
+   "tools": [
+    "recall",
+    "list_tasks"
+   ],
+   "tokens": {
+    "input": 2650,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 255
+   },
+   "model_calls": 2,
+   "cost_usd": 0.001432,
+   "seconds": 1.82,
+   "session": 2,
+   "turn": 1,
+   "prompt": "חזרתי. תזכיר לי מה ההעדפות ששמרת לגבי שעות הלימוד שלי, ומה הכי דחוף השבוע?"
+  },
+  {
+   "answer": "תכנות דינמי (Dynamic Programming) היא שיטת תכנות ואלגוריתמיקה שבה פותרים בעיה מורכבת על ידי פירווקה לתת-בעיות פשוטות יותר, פתרון כל תת-בעיה פעם אחת ושמירת התוצאה (בדרך כלל במערך או טבלה) כדי להימנע מחישוב חוזר. \n\n*(החיפוש ברשת נכשל זמנית, אך זהו העיקרון המרכזי).*\n\nהוספתי בהצלחה את המשימה **\"חזרה על תכנות דינמי\"** (שעתיים, אלגוריתמים, להגשה ב-2026-11-03, מזהה T4).",
+   "tools": [
+    "lookup_topic",
+    "add_task",
+    "lookup_topic"
+   ],
+   "tokens": {
+    "input": 5906,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 708
+   },
+   "model_calls": 3,
+   "cost_usd": 0.003542,
+   "seconds": 4.59,
+   "session": 2,
+   "turn": 2,
+   "prompt": "אני לא מבין מה זה תכנות דינמי (dynamic programming). תביא הסבר קצר מהאינטרנט, ותוסיף משימה של שעתיים לחזור על הנושא עד 2026-11-03, כהכנה לתרגיל באלגוריתמים."
+  },
+  {
+   "answer": "עדכנתי את שעת הסיום של יום הלימודים ל-23:00. \n\nלהלן תוכנית הלימודים לשבוע שמתחיל ב-30/10:\n\n- **יום שישי (30/10):**\n  - קריאה לסמינר המחקר (T1)\n  - תרגיל 3 באלגוריתמים (T2)\n  - חזרה על תכנות דינמי (T4)\n  - פרויקט בסטטיסטיקה (T3)\n- **יום שבת (31/10):** חופש\n- **יום ראשון (01/11):**\n  - תרגיל 3 באלגוריתמים (T2)\n  - פרויקט בסטטיסטיקה (T3)\n\nכל המשימות שובצו בהצלחה ואין משימות לא משובצות.",
+   "tools": [
+    "remember",
+    "plan_week"
+   ],
+   "tokens": {
+    "input": 5773,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 863
+   },
+   "model_calls": 2,
+   "cost_usd": 0.003889,
+   "seconds": 3.81,
+   "session": 2,
+   "turn": 3,
+   "prompt": "שינוי: מעכשיו אפשר ללמוד אצלי עד 23:00 בלילה. תעדכן את זה ותבנה מחדש את התוכנית לאותו שבוע."
+  },
+  {
+   "answer": "סימנתי את \"קריאה לסמינר המחקר\" (T1) כמבוצעת. כל הכבוד!",
+   "tools": [
+    "complete_task"
+   ],
+   "tokens": {
+    "input": 7537,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 133
+   },
+   "model_calls": 2,
+   "cost_usd": 0.002594,
+   "seconds": 1.84,
+   "session": 2,
+   "turn": 4,
+   "prompt": "סיימתי את הקריאה לסמינר, תסמן אותה כגמורה."
+  }
+ ],
+ "totals": {
+  "input": 32916,
+  "cache_read": 0,
+  "cache_write": 0,
+  "output": 3449,
+  "cache_hit_pct": 0.0,
+  "model_calls": 15,
+  "cost_usd": 0.0185,
+  "seconds": 19.5
+ },
+ "checks": [
+  {
+   "id": "memory_day_end_updated",
+   "passed": true,
+   "detail": "day_end=23:00",
+   "desc": "contradicting request: the newer limit (23:00) replaced the saved one"
+  },
+  {
+   "id": "memory_old_value_kept",
+   "passed": false,
+   "detail": "history=[]",
+   "desc": "the replaced value 22:00 is kept in the preference history, not silently lost"
+  },
+  {
+   "id": "memory_days_off_saved",
+   "passed": true,
+   "detail": "days_off=sat",
+   "desc": "Saturday-off preference from session 1 was saved to memory"
+  },
+  {
+   "id": "tasks_saved",
+   "passed": true,
+   "detail": "4 tasks",
+   "desc": "3 tasks from session 1 + 1 from session 2 are on disk"
+  },
+  {
+   "id": "dp_task_added",
+   "passed": true,
+   "detail": "matches=['T4']",
+   "desc": "review task for dynamic programming was added with the right deadline"
+  },
+  {
+   "id": "seminar_done",
+   "passed": true,
+   "detail": "[('T1', 'done')]",
+   "desc": "seminar reading marked done"
+  },
+  {
+   "id": "plan_uses_current_prefs",
+   "passed": true,
+   "detail": "violations=0 plan_window=08:00-23:00 prefs=08:00-23:00",
+   "desc": "saved plan was rebuilt with 08:00-23:00 and has no block outside it or on Saturday"
+  },
+  {
+   "id": "plan_no_clash",
+   "passed": true,
+   "detail": "11 blocks, clashes=[]",
+   "desc": "no study block overlaps an event in the timetable file"
+  },
+  {
+   "id": "plan_dp_before_due",
+   "passed": true,
+   "detail": "T4 blocks=2 due=2026-11-03",
+   "desc": "the new DP task is scheduled before its deadline"
+  },
+  {
+   "id": "web_tool_used",
+   "passed": true,
+   "detail": "session 2 tools=['add_task', 'complete_task', 'list_tasks', 'lookup_topic', 'plan_week', 'recall', 'remember']",
+   "desc": "the external internet tool was used in session 2"
+  },
+  {
+   "id": "recall_in_session2",
+   "passed": true,
+   "detail": "found=['22:00', '22']",
+   "desc": "the fresh session-2 agent recalls the 22:00 limit from memory (text check)"
+  }
+ ],
+ "checks_passed": "10/11",
+ "loc": {
+  "loop": 3,
+  "client": 0,
+  "tools": 14,
+  "history": 6,
+  "memory": 12,
+  "context": 3,
+  "compaction": 1,
+  "caching": 1,
+  "tokens": 14
+ },
+ "final_state": {
+  "tasks": [
+   {
+    "id": "T1",
+    "title": "קריאה לסמינר המחקר",
+    "course": "סמינר המחקר",
+    "due": "2026-11-02",
+    "hours": 2.0,
+    "status": "done",
+    "created": "2026-10-30",
+    "done_on": "2026-10-30"
+   },
+   {
+    "id": "T2",
+    "title": "תרגיל 3 באלגוריתמים",
+    "course": "אלגוריתמים",
+    "due": "2026-11-03",
+    "hours": 6.0,
+    "status": "open",
+    "created": "2026-10-30"
+   },
+   {
+    "id": "T3",
+    "title": "פרויקט בסטטיסטיקה",
+    "course": "סטטיסטיקה",
+    "due": "2026-11-05",
+    "hours": 4.0,
+    "status": "open",
+    "created": "2026-10-30"
+   },
+   {
+    "id": "T4",
+    "title": "חזרה על תכנות דינמי",
+    "course": "אלגוריתמים",
+    "due": "2026-11-03",
+    "hours": 2.0,
+    "status": "open",
+    "created": "2026-10-30"
+   }
+  ],
+  "prefs": {
+   "days_off": {
+    "value": "sat",
+    "updated": "2026-10-30",
+    "history": []
+   },
+   "day_end": {
+    "value": "23:00",
+    "updated": "2026-10-30",
+    "history": []
+   }
+  },
+  "plan": {
+   "week_start": "2026-10-30",
+   "created": "2026-10-30",
+   "rules": {
+    "day_start": "08:00",
+    "day_end": "23:00",
+    "days_off": [
+     "sat"
+    ],
+    "session_minutes": 90
+   },
+   "blocks": [
+    {
+     "task_id": "T1",
+     "date": "2026-10-30",
+     "start": "08:00",
+     "end": "09:30"
+    },
+    {
+     "task_id": "T1",
+     "date": "2026-10-30",
+     "start": "09:45",
+     "end": "10:15"
+    },
+    {
+     "task_id": "T2",
+     "date": "2026-10-30",
+     "start": "10:30",
+     "end": "12:00"
+    },
+    {
+     "task_id": "T2",
+     "date": "2026-10-30",
+     "start": "12:15",
+     "end": "13:45"
+    },
+    {
+     "task_id": "T4",
+     "date": "2026-10-30",
+     "start": "14:00",
+     "end": "15:30"
+    },
+    {
+     "task_id": "T4",
+     "date": "2026-10-30",
+     "start": "15:45",
+     "end": "16:15"
+    },
+    {
+     "task_id": "T3",
+     "date": "2026-10-30",
+     "start": "16:30",
+     "end": "18:00"
+    },
+    {
+     "task_id": "T3",
+     "date": "2026-10-30",
+     "start": "18:15",
+     "end": "19:45"
+    },
+    {
+     "task_id": "T2",
+     "date": "2026-11-01",
+     "start": "08:00",
+     "end": "09:30"
+    },
+    {
+     "task_id": "T2",
+     "date": "2026-11-01",
+     "start": "12:15",
+     "end": "13:45"
+    },
+    {
+     "task_id": "T3",
+     "date": "2026-11-01",
+     "start": "14:00",
+     "end": "15:00"
+    }
+   ],
+   "unscheduled_hours": {}
+  }
+ }
+}
