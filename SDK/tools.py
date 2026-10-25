@@ -4,8 +4,8 @@ function declarations and runs them itself (automatic function calling).
 The docstring of each function is the tool description, built from the same TOOL_SPECS the API
 version sends. Errors become an "error: ..." string, like API/harness/tools.py.
 """
-from __future__ import annotations
 
+# no `from __future__ import annotations` here: google-genai resolves the real type objects to build schemas
 from pathlib import Path
 
 from shared.domain import TOOL_SPECS, StudyDomain
