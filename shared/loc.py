@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-PARTS = ["loop", "tools", "history", "memory", "context", "compaction", "caching", "tokens"]
+PARTS = ["loop", "client", "tools", "history", "memory", "context", "compaction", "caching", "tokens"]
 ROOT = Path(__file__).resolve().parent.parent
 
 

@@ -65,27 +65,37 @@ def test_loc_counts_every_part():
     assert sdk["tools"] > 0 and sdk["memory"] > 0 and sdk["loop"] > 0 and sdk["history"] > 0
 
 
-def test_sdk_tools_run_offline_and_update_claude_md(state):
-    from SDK.tools import make_tools, render_claude_md
+def test_sdk_tools_run_offline_and_report_errors(state):
+    from SDK.tools import make_tools, render_memory
     store = StudyStore(state, "2026-10-30")
-    md = state / "CLAUDE.md"
-    render_claude_md(store, md)
-    tools = {t.name: t for t in make_tools(StudyDomain(store, fetch=fake_fetch), md)}
-    assert len(tools) == 8
-    ok = asyncio.run(tools["remember"].handler({"key": "day_end", "value": "22:00"}))
-    assert not ok.get("is_error") and "day_end: 22:00" in md.read_text()
-    bad = asyncio.run(tools["complete_task"].handler({"task_id": "T9"}))
-    assert bad["is_error"] is True
-    web = asyncio.run(tools["lookup_topic"].handler({"topic": "dynamic programming"}))
-    assert "wikipedia.org" in web["content"][0]["text"]
+    called = []
+    tools = {f.__name__: f for f in make_tools(StudyDomain(store, fetch=fake_fetch), called)}
+    assert len(tools) == 8 and "Args:" in tools["add_task"].__doc__
+    assert tools["remember"](key="day_end", value="22:00").startswith("saved")
+    assert "day_end: 22:00" in render_memory(store)
+    assert tools["complete_task"](task_id="T9").startswith("error:")
+    assert "wikipedia.org" in tools["lookup_topic"](topic="dynamic programming")
+    assert called == ["remember", "complete_task", "lookup_topic"]
 
 
-def test_sdk_options_are_restricted(state):
-    from SDK.agent import StudyAgentSDK
+def test_sdk_agent_wiring_and_usage_tap(state):
+    from SDK.agent import StudyAgentSDK, UsageTap
     from shared.prompt import SYSTEM_PROMPT
-    a = StudyAgentSDK(state, CFG, "2026-10-30")
-    o = a.options
-    assert o.strict_mcp_config is True and o.tools == [] and o.system_prompt == SYSTEM_PROMPT
-    assert o.setting_sources == ["project"] and o.effort == "medium" and o.model == "claude-opus-5-5"
-    assert all(t.startswith("mcp__study__") for t in o.allowed_tools) and len(o.allowed_tools) == 8
-    assert (state / "sdk_workspace" / "CLAUDE.md").exists()
+    a = StudyAgentSDK("fake-key", state, CFG, "2026-10-30")
+    c = a.chat._config
+    assert c.system_instruction.startswith(SYSTEM_PROMPT) and "Saved memory" in c.system_instruction
+    assert len(c.tools) == 8 and c.automatic_function_calling.maximum_remote_calls == 10
+    assert str(c.thinking_config.thinking_level).endswith("MEDIUM")
+    tap = UsageTap()
+
+    class R:
+        url = "https://x/v1beta/models/m:generateContent"
+        status_code = 200
+
+        def read(self):
+            pass
+
+        def json(self):
+            return {"usageMetadata": {"promptTokenCount": 5}}
+    tap(R())
+    assert tap.calls == [{"promptTokenCount": 5}]

@@ -1,85 +1,72 @@
-"""The same 8 domain tools, exposed to Claude Code as an in-process MCP server.
+"""The same 8 domain tools as plain Python functions; the google-genai SDK turns them into
+function declarations and runs them itself (automatic function calling).
 
-Each @tool wraps one shared StudyDomain method. Errors become is_error results,
-exactly like API/harness/tools.py - but the dispatch and the tool_result plumbing
-are done by the SDK.
+The docstring of each function is the tool description, built from the same TOOL_SPECS the API
+version sends. Errors become an "error: ..." string, like API/harness/tools.py.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from claude_agent_sdk import create_sdk_mcp_server, tool
-
 from shared.domain import TOOL_SPECS, StudyDomain
 from shared.store import DEFAULT_PREFS, StudyStore
 
-SERVER = "study"
-ALLOWED = [f"mcp__{SERVER}__{name}" for name in TOOL_SPECS]  # replaces: tools (restricted tool list)
 
-
-def render_claude_md(store: StudyStore, path: Path) -> None:
-    """Long-term memory file that Claude Code loads at session start."""
+def render_memory(store: StudyStore) -> str:
+    """Long-term memory block appended to the system instruction at session start."""
     prefs = store.prefs()  # replaces: memory
-    lines = ["# Study Compass - saved memory", "",  # replaces: memory
-             f"Today (use this date, not the system date): {store.today.isoformat()}", "",  # replaces: context
-             "## Preferences (from prefs.json, kept up to date by `remember`)"]  # replaces: memory
+    lines = ["Saved memory (from prefs.json, kept up to date by `remember`):",  # replaces: memory
+             f"Today (use this date, not the system date): {store.today.isoformat()}"]  # replaces: context
     for k in DEFAULT_PREFS:  # replaces: memory
         e = prefs.get(k)  # replaces: memory
         prev = f" (previously {e['history'][-1]['value']})" if e and e.get("history") else ""  # replaces: memory
         lines.append(f"- {k}: {e['value'] if e else (DEFAULT_PREFS[k] or '-') + ' (default)'}{prev}")  # replaces: memory
     for n in prefs.get("note", {}).get("value", []):  # replaces: memory
         lines.append(f"- note: {n}")  # replaces: memory
-    lines += ["", "Tasks and the timetable are NOT listed here: use list_tasks / read_calendar."]  # replaces: context
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")  # replaces: memory
+    lines.append("Tasks and the timetable are NOT listed here: use list_tasks / read_calendar.")  # replaces: context
+    return "\n".join(lines)  # replaces: memory
 
 
-def make_tools(domain: StudyDomain, claude_md: Path) -> list:
-    def run(name: str, args: dict) -> dict:
+def _doc(name: str) -> str:
+    spec = TOOL_SPECS[name]
+    args = "\n".join(f"    {k}: {v['description']}" for k, v in spec["schema"]["properties"].items()
+                     if v.get("description"))
+    return spec["description"] + (f"\n\nArgs:\n{args}" if args else "")
+
+
+def make_tools(domain: StudyDomain, called: list[str]) -> list:
+    def run(name: str, **args) -> str:
+        called.append(name)
         try:  # replaces: tools
-            text = domain.call(name, args)  # replaces: tools
+            return domain.call(name, {k: v for k, v in args.items() if v not in (None, "")})  # replaces: tools
         except Exception as e:  # replaces: tools
-            return {"content": [{"type": "text", "text": f"error: {e}"}], "is_error": True}  # replaces: tools
-        if name == "remember":
-            render_claude_md(domain.store, claude_md)  # replaces: memory
-        return {"content": [{"type": "text", "text": text}]}  # replaces: tools
+            return f"error: {e}"  # replaces: tools
 
-    def spec(name):
-        return name, TOOL_SPECS[name]["description"], TOOL_SPECS[name]["schema"]
+    def add_task(title: str, course: str, due: str, hours: float) -> str:  # replaces: tools
+        return run("add_task", title=title, course=course, due=due, hours=hours)
 
-    @tool(*spec("add_task"))  # replaces: tools
-    async def add_task(args):
-        return run("add_task", args)
+    def list_tasks(status: str = "open", course: str = "") -> str:  # replaces: tools
+        return run("list_tasks", status=status, course=course)
 
-    @tool(*spec("list_tasks"))  # replaces: tools
-    async def list_tasks(args):
-        return run("list_tasks", args)
+    def complete_task(task_id: str) -> str:  # replaces: tools
+        return run("complete_task", task_id=task_id)
 
-    @tool(*spec("complete_task"))  # replaces: tools
-    async def complete_task(args):
-        return run("complete_task", args)
+    def read_calendar(start: str, end: str) -> str:  # replaces: tools
+        return run("read_calendar", start=start, end=end)
 
-    @tool(*spec("read_calendar"))  # replaces: tools
-    async def read_calendar(args):
-        return run("read_calendar", args)
+    def plan_week(week_start: str) -> str:  # replaces: tools
+        return run("plan_week", week_start=week_start)
 
-    @tool(*spec("plan_week"))  # replaces: tools
-    async def plan_week(args):
-        return run("plan_week", args)
+    def lookup_topic(topic: str, lang: str = "en") -> str:  # replaces: tools
+        return run("lookup_topic", topic=topic, lang=lang)
 
-    @tool(*spec("lookup_topic"))  # replaces: tools
-    async def lookup_topic(args):
-        return run("lookup_topic", args)
+    def remember(key: str, value: str) -> str:  # replaces: tools, memory
+        return run("remember", key=key, value=value)
 
-    @tool(*spec("remember"))  # replaces: tools, memory
-    async def remember(args):
-        return run("remember", args)
+    def recall() -> str:  # replaces: tools, memory
+        return run("recall")
 
-    @tool(*spec("recall"))  # replaces: tools, memory
-    async def recall(args):
-        return run("recall", args)
-
-    return [add_task, list_tasks, complete_task, read_calendar, plan_week, lookup_topic, remember, recall]
-
-
-def build_server(domain: StudyDomain, claude_md: Path):
-    return create_sdk_mcp_server(SERVER, "1.0.0", tools=make_tools(domain, claude_md))  # replaces: tools
+    fns = [add_task, list_tasks, complete_task, read_calendar, plan_week, lookup_topic, remember, recall]
+    for f in fns:
+        f.__doc__ = _doc(f.__name__)  # replaces: tools
+    return fns

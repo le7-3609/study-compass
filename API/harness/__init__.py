@@ -1,4 +1,4 @@
-"""Hand-written agent harness on the raw Messages API. One file per responsibility."""
+"""Hand-written agent harness on the raw Gemini REST API. One file per responsibility."""
 from pathlib import Path
 
 QUIET = False

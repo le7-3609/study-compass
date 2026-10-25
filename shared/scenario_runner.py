@@ -29,7 +29,7 @@ def clean_state(state_dir: Path) -> None:
 
 def _versions() -> dict:
     out = {"python": platform.python_version()}
-    for pkg in ("anthropic", "claude-agent-sdk"):
+    for pkg in ("google-genai",):
         try:
             out[pkg] = metadata.version(pkg)
         except metadata.PackageNotFoundError:

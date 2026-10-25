@@ -1,4 +1,4 @@
-"""Study Compass on the raw Messages API: wires the hand-written harness together."""
+"""Study Compass on the raw Gemini REST API: wires the hand-written harness together."""
 from __future__ import annotations
 
 import uuid

@@ -29,21 +29,20 @@ def test_loop_runs_until_end_turn_and_batches_tool_results(state):
     assert r["model_calls"] == 2
     assert r["tools"] == ["add_task", "remember"]
     msgs = agent.history.messages()
-    tool_msgs = [m for m in msgs if m["role"] == "user" and isinstance(m["content"], list)
-                 and m["content"][0].get("type") == "tool_result"]
-    assert len(tool_msgs) == 1 and len(tool_msgs[0]["content"]) == 2  # both results in ONE message
-    assert r["tokens"] == {"input": 550, "cache_read": 900, "cache_write": 400, "output": 40}
+    tool_msgs = [m for m in msgs if m["role"] == "user" and "functionResponse" in m["parts"][0]]
+    assert len(tool_msgs) == 1 and len(tool_msgs[0]["parts"]) == 2  # both results in ONE message
+    assert any(p.get("thoughtSignature") == "sig" for m in msgs if m["role"] == "model" for p in m["parts"])
+    assert r["tokens"] == {"input": 550, "cache_read": 900, "cache_write": 0, "output": 40}
     assert agent.store.pref("day_end") == "22:00"
 
 
-def test_loop_sends_effort_thinking_and_cache_points(state):
+def test_loop_sends_thinking_level_tools_and_system(state):
     client = FakeClient([text_resp("hi")])
     StudyAgent(client, state, CFG, "2026-10-30").ask("hi")
-    req = client.messages.requests[0]
-    assert req["output_config"] == {"effort": "medium"} and req["thinking"] == {"type": "adaptive"}
-    assert req["tools"][-1]["cache_control"] == {"type": "ephemeral"}
-    assert req["system"][0]["cache_control"] == {"type": "ephemeral"}
-    assert req["messages"][-1]["content"][-1]["cache_control"] == {"type": "ephemeral"}
+    req = client.requests[0]
+    assert req["thinking_level"] == "medium" and req["model"] == CFG["model"]
+    assert len(req["tools"][0]["functionDeclarations"]) == 8 and "Study Compass" in req["system"]
+    assert req["contents"][-1]["role"] == "user"
 
 
 # ---------- tools.py ----------
@@ -55,36 +54,38 @@ def test_tool_errors_return_is_error_and_loop_continues(state):
     ])
     agent = StudyAgent(client, state, CFG, "2026-10-30")
     assert agent.ask("x")["answer"] == "fixed"
-    second_req = client.messages.requests[1]["messages"]
-    results = second_req[-1]["content"]
-    assert all(r["is_error"] for r in results)
-    assert "YYYY-MM-DD" in results[0]["content"] and "unknown tool" in results[1]["content"]
+    results = client.requests[1]["contents"][-1]["parts"]
+    resp = [r["functionResponse"] for r in results]
+    assert all("error" in r["response"] for r in resp)
+    assert "YYYY-MM-DD" in resp[0]["response"]["error"] and "unknown tool" in resp[1]["response"]["error"]
 
 
 def test_tool_schemas_are_valid_api_format():
-    s = schemas()
-    assert len(s) == 8
-    assert {x["name"] for x in s} >= {"add_task", "read_calendar", "lookup_topic", "remember"}
-    assert all(x["input_schema"]["type"] == "object" for x in s)
+    decls = schemas()[0]["functionDeclarations"]
+    assert len(decls) == 8
+    assert {x["name"] for x in decls} >= {"add_task", "read_calendar", "lookup_topic", "remember"}
+    assert all(x["parametersJsonSchema"]["type"] == "object" for x in decls if x["name"] != "recall")
+    assert "parametersJsonSchema" not in next(x for x in decls if x["name"] == "recall")
 
 
 def test_tool_output_is_compact_and_capped(state):
     store = StudyStore(state, "2026-10-30")
     box = Toolbox(StudyDomain(store, fetch=fake_fetch))
-    out = box.execute({"id": "1", "name": "lookup_topic", "input": {"topic": "dynamic programming"}})
-    assert len(out["content"]) < 800 and "source:" in out["content"]
-    again = box.execute({"id": "2", "name": "lookup_topic", "input": {"topic": "Dynamic Programming"}})
-    assert "(cached)" in again["content"]
+    out = box.execute({"id": "1", "name": "lookup_topic", "args": {"topic": "dynamic programming"}})["functionResponse"]
+    text = out["response"]["result"]
+    assert out["id"] == "1" and len(text) < 800 and "source:" in text
+    again = box.execute({"name": "lookup_topic", "args": {"topic": "Dynamic Programming"}})["functionResponse"]
+    assert "(cached)" in again["response"]["result"]
 
 
 # ---------- history.py ----------
 def test_history_is_append_only_and_reloads(state):
     h = History(state / "c.jsonl")
-    h.append("user", "hello")
-    h.append("assistant", [{"type": "text", "text": "hi"}])
-    before = (state / "c.jsonl").read_text()
-    h.append("user", "again")
-    assert (state / "c.jsonl").read_text().startswith(before)  # old lines untouched
+    h.append("user", [{"text": "hello"}])
+    h.append("model", [{"text": "hi"}])
+    before = (state / "c.jsonl").read_text(encoding="utf-8")
+    h.append("user", [{"text": "again"}])
+    assert (state / "c.jsonl").read_text(encoding="utf-8").startswith(before)  # old lines untouched
     assert len(History(state / "c.jsonl").messages()) == 3      # a new instance reads the same conversation
 
 
@@ -92,29 +93,34 @@ def test_history_is_append_only_and_reloads(state):
 def test_compaction_summarises_old_turns_and_keeps_last(state):
     h = History(state / "c.jsonl")
     for i in range(3):
-        h.append("user", [{"type": "text", "text": f"question {i}"}])
-        h.append("assistant", [{"type": "tool_use", "id": f"u{i}", "name": "recall", "input": {}}])
-        h.append("user", [{"type": "tool_result", "tool_use_id": f"u{i}", "content": "x"}])
-        h.append("assistant", [{"type": "text", "text": f"answer {i}"}])
+        h.append("user", [{"text": f"question {i}"}])
+        h.append("model", [{"functionCall": {"name": "recall", "args": {}}}])
+        h.append("user", [{"functionResponse": {"name": "recall", "response": {"result": "x"}}}])
+        h.append("model", [{"text": f"answer {i}"}])
     lines_before = len(h.records())
     client = FakeClient([text_resp("student asked 3 things")])
-    meter = TurnMeter("claude-opus-5-5")
+    meter = TurnMeter(CFG["model"])
     assert not compaction.maybe_compact(client, "m", h, meter, 100, threshold=1000)
     assert compaction.maybe_compact(client, "m", h, meter, 5000, threshold=1000)
     msgs = h.messages()
-    assert "student asked 3 things" in msgs[0]["content"]
-    assert msgs[2]["content"][0]["text"] == "question 2"   # last turn kept intact (tool pair not split)
+    assert "student asked 3 things" in msgs[0]["parts"][0]["text"]
+    assert msgs[2]["parts"][0]["text"] == "question 2"   # last turn kept intact (tool pair not split)
     assert len(msgs) == 2 + 4
     assert len(h.records()) == lines_before + 1             # appended, nothing rewritten
     assert meter.calls == 1
 
 
 # ---------- caching.py ----------
-def test_caching_does_not_mutate_history():
-    msgs = [{"role": "user", "content": [{"type": "text", "text": "a"}]}]
-    tools, system, out = caching.apply([{"name": "t"}], "sys", msgs)
-    assert "cache_control" not in msgs[0]["content"][0]
-    assert out[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+def test_caching_is_implicit_and_resends_a_stable_prefix(state):
+    msgs = [{"role": "user", "parts": [{"text": "a"}]}]
+    assert caching.apply([{"name": "t"}], "sys", msgs) == ([{"name": "t"}], "sys", msgs)
+    client = FakeClient([text_resp("a", inp=300), text_resp("b", inp=20, read=300)])
+    agent = StudyAgent(client, state, CFG, "2026-10-30")
+    agent.ask("one")
+    r = agent.ask("two")
+    assert r["tokens"]["cache_read"] == 300 and r["tokens"]["input"] == 20
+    first, second = client.requests[0]["contents"], client.requests[1]["contents"]
+    assert second[:len(first)] == first  # earlier messages are resent unchanged (what implicit caching needs)
 
 
 # ---------- memory.py + context.py ----------
@@ -149,9 +155,9 @@ def test_session2_fresh_instance_gets_memory_from_disk(state):
     c2 = FakeClient([text_resp("your limit is 22:00")])
     a2 = StudyAgent(c2, state, CFG, "2026-10-30")       # new instance, new conversation
     a2.ask("what did I tell you?")
-    first_msg = c2.messages.requests[0]["messages"]
+    first_msg = c2.requests[0]["contents"]
     assert len(first_msg) == 1                            # no old conversation...
-    assert "day_end=22:00" in first_msg[0]["content"][0]["text"]  # ...but memory is there
+    assert "day_end=22:00" in first_msg[0]["parts"][0]["text"]  # ...but memory is there
 
 
 def test_results_json_shape_via_runner(state, tmp_path):
@@ -164,7 +170,7 @@ def test_results_json_shape_via_runner(state, tmp_path):
     client = FakeClient(script)
     out = tmp_path / "r.json"
     asyncio.run(run_scenario(scen, out, state, lambda s, t, n: StudyAgent(client, s, CFG, t), "API", {}, {}))
-    r = json.loads(out.read_text())
+    r = json.loads(out.read_text(encoding="utf-8"))
     assert r["checks_passed"] == "1/1"
     assert set(r["turns"][0]) >= {"tokens", "model_calls", "tools", "cost_usd", "seconds", "session", "turn"}
     assert r["totals"]["model_calls"] == 3

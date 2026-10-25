@@ -30,9 +30,9 @@ class History:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    def append(self, role: str, content) -> None:
-        self._append({"type": "message", "role": role, "content": content})
-        kinds = [c.get("type") for c in content] if isinstance(content, list) else ["text"]
+    def append(self, role: str, parts: list[dict]) -> None:
+        self._append({"type": "message", "role": role, "parts": parts})
+        kinds = [next((k for k in p if k != "thoughtSignature"), "?") for p in parts]
         log(f"append {role}: {','.join(kinds)}")
 
     def append_compaction(self, summary: str, dropped: int) -> None:
@@ -47,9 +47,9 @@ class History:
         view: list[dict] = []
         for r in self.records():
             if r["type"] == "message":
-                view.append({"role": r["role"], "content": r["content"]})
+                view.append({"role": r["role"], "parts": r["parts"]})
             elif r["type"] == "compaction":
-                view = [{"role": "user", "content": f"<summary of earlier conversation>\n{r['summary']}\n</summary>"},
-                        {"role": "assistant", "content": "Understood, I'll continue from that summary."}] \
+                view = [{"role": "user", "parts": [{"text": f"<summary of earlier conversation>\n{r['summary']}\n</summary>"}]},
+                        {"role": "model", "parts": [{"text": "Understood, I'll continue from that summary."}]}] \
                        + view[r["dropped"]:]
         return view

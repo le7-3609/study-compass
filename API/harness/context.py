@@ -40,4 +40,4 @@ class ContextBuilder:
         ctx = "<context>\n" + "\n".join(parts) + "\n</context>"
         log(f"injected {len(ctx)} chars (~{len(ctx) // 4} tokens): date, prefs, {len(tasks)} tasks"
             f"{', plan pointer' if plan else ''}; excluded: calendar, {left_out} tasks, done tasks")
-        return [{"type": "text", "text": ctx}, {"type": "text", "text": user_text}]
+        return [{"text": ctx}, {"text": user_text}]

@@ -1,3 +1,2 @@
-anthropic==2.3.0
-claude-agent-sdk==0.2.172
+google-genai==2.33.0
 pytest==9.1.1

@@ -1,4 +1,4 @@
-"""Tool layer: JSON schemas for the API, dispatch to the domain, errors as is_error."""
+"""Tool layer: function declarations for the API, dispatch to the domain, errors as error results."""
 from __future__ import annotations
 
 from shared.domain import TOOL_SPECS, StudyDomain
@@ -11,8 +11,13 @@ MAX_RESULT_CHARS = 2000  # hard cap so one tool can never flood the context
 
 
 def schemas() -> list[dict]:
-    return [{"name": name, "description": spec["description"], "input_schema": spec["schema"]}
-            for name, spec in TOOL_SPECS.items()]
+    decls = []
+    for name, spec in TOOL_SPECS.items():
+        d = {"name": name, "description": spec["description"]}
+        if spec["schema"]["properties"]:  # Gemini rejects an empty parameter object
+            d["parametersJsonSchema"] = spec["schema"]
+        decls.append(d)
+    return [{"functionDeclarations": decls}]
 
 
 class Toolbox:
@@ -20,24 +25,23 @@ class Toolbox:
         self.domain = domain
         self.called: list[str] = []
 
-    def execute(self, block: dict) -> dict:
-        """One tool_use block -> one tool_result block (never raises)."""
-        name, args, tid = block["name"], block.get("input") or {}, block["id"]
+    def execute(self, call: dict) -> dict:
+        """One functionCall -> one functionResponse part (never raises)."""
+        name, args = call["name"], call.get("args") or {}
         self.called.append(name)
         try:
-            text = self.domain.call(name, args)
-            is_error = False
+            text, key = self.domain.call(name, args), "result"
         except DomainError as e:
-            text, is_error = f"error: {e}", True
+            text, key = f"error: {e}", "error"
         except Exception as e:  # bug in a tool: still give the model something to react to
-            text, is_error = f"internal error in {name}: {type(e).__name__}: {e}", True
+            text, key = f"internal error in {name}: {type(e).__name__}: {e}", "error"
         if len(text) > MAX_RESULT_CHARS:
             text = text[:MAX_RESULT_CHARS] + f"\n…[truncated {len(text) - MAX_RESULT_CHARS} chars]"
-        log(f"{name}({_short(args)}) -> {'ERROR ' if is_error else ''}{len(text)} chars")
-        result = {"type": "tool_result", "tool_use_id": tid, "content": text}
-        if is_error:
-            result["is_error"] = True
-        return result
+        log(f"{name}({_short(args)}) -> {'ERROR ' if key == 'error' else ''}{len(text)} chars")
+        resp = {"name": name, "response": {key: text}}
+        if call.get("id"):
+            resp["id"] = call["id"]
+        return {"functionResponse": resp}
 
 
 def _short(args: dict) -> str:

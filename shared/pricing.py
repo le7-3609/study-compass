@@ -1,7 +1,15 @@
-"""USD per million tokens (standard API rates, 5-minute cache writes)."""
+"""Notional USD per million tokens at paid-tier rates (introductory prices valid through 2026-12-31).
+
+The free tier bills nothing; the cost column answers "what would this run cost on the paid tier".
+Gemini implicit caching has no write charge, so cache_write is 0.
+"""
 
 PRICES = {
-    "claude-opus-5-5": {"input": 4.00, "cache_write": 5.00, "cache_read": 0.20, "output": 20.00},
+    "gemini-3.6-flash": {"input": 0.75, "cache_write": 0.0, "cache_read": 0.075, "output": 3.75},
+    "gemini-3.5-flash-lite": {"input": 0.30, "cache_write": 0.0, "cache_read": 0.03, "output": 2.50},
+    "gemini-3.8-flash": {"input": 0.75, "cache_write": 0.0, "cache_read": 0.075, "output": 3.75},
+    "gemini-3-flash-preview": {"input": 0.50, "cache_write": 0.0, "cache_read": 0.05, "output": 3.00},
+    "gemini-2.5-flash": {"input": 0.30, "cache_write": 0.0, "cache_read": 0.03, "output": 2.50},
 }
 
 

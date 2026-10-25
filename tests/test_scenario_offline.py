@@ -48,7 +48,7 @@ def test_full_scenario_all_checks_pass(tmp_path):
     out = tmp_path / "api.json"
     factory = lambda s, t, n: StudyAgent(client, s, CFG, t, fetch=fake_fetch)  # noqa: E731
     asyncio.run(run_scenario(ROOT / "scenario.json", out, tmp_path / "state", factory, "API-fake", {}, {}))
-    r = json.loads(out.read_text())
+    r = json.loads(out.read_text(encoding="utf-8"))
     failed = [c for c in r["checks"] if not c["passed"]]
     assert not failed, failed
-    assert len(r["turns"]) == 7 and not client.messages.script
+    assert len(r["turns"]) == 7 and not client.script
